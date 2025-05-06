@@ -33,6 +33,10 @@ public class LoanApplication {
     private Integer creditScore;
     
     private String employmentStatus;
+
+    private String aadharNumber;
+
+    private String panNumber;
     
     private Double requestedAmount;
     
@@ -40,7 +44,7 @@ public class LoanApplication {
     
     private String status; // Approved, Rejected, Needs Review
     
-    private Double confidenceScore;
+    private Double riskScore;
     
     @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();

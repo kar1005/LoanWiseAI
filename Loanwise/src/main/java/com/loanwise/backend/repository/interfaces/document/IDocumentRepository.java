@@ -1,6 +1,5 @@
 package com.loanwise.backend.repository.interfaces.document;
 
-import com.loanwise.backend.model.Document;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 

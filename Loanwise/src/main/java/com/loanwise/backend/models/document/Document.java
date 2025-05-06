@@ -19,7 +19,7 @@ public class Document {
     
     private String fileName;
     
-    private String type; // PAN, Aadhaar, Salary Slip, Bank Statement, ITR
+    private String type; // PAN, Aadhaar, Bank Statement, ITR
     
     private String filePath;
     

@@ -30,6 +30,9 @@ public class User {
     private String email;
     
     private String password;
+
+    @Builder.Default
+    private String role = "USER"; // Default role is USER
     
     @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();

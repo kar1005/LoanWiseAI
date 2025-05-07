@@ -59,7 +59,7 @@ public class DocumentProcessingService {
      * @param documentTypes List of document types
      */
     public void processAndSaveDocuments(String applicationId, Map<String, String> cloudinaryUrls, List<String> documentTypes) {
-        List<Document> documents = new ArrayList<>();
+        List<Documents> documents = new ArrayList<>();
         
         int i = 0;
         for (Map.Entry<String, String> entry : cloudinaryUrls.entrySet()) {
@@ -83,7 +83,7 @@ public class DocumentProcessingService {
      * @param documentId ID of the document to delete
      */
     public void deleteDocument(String documentId) throws IOException {
-        Document document = documentRepository.findById(documentId)
+        Documents document = documentRepository.findById(documentId)
             .orElseThrow(() -> new IllegalArgumentException("Document not found with ID: " + documentId));
         
         // Delete from Cloudinary
@@ -103,8 +103,8 @@ public class DocumentProcessingService {
      * @param applicationId ID of the loan application
      * @return List of documents
      */
-    public List<Document> getDocumentsByApplicationId(String applicationId) {
-        List<Document> documents = documentRepository.findByApplicationId(applicationId);
+    public List<Documents> getDocumentsByApplicationId(String applicationId) {
+        List<Documents> documents = documentRepository.findByApplicationId(applicationId);
         log.info("Found {} documents for application ID: {}", documents.size(), applicationId);
         return documents;
     }

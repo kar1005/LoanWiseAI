@@ -637,47 +637,109 @@ class DocumentProcessor:
             logger.error(f"Error saving results: {e}")
             return False
 
+def determine_loan_approval(extracted_fields: Dict[str, Any], model_path: str) -> Dict[str, Any]:
+    """
+    Determine if a loan should be approved based on extracted fields and a machine learning model.
+    
+    Args:
+        extracted_fields: Dictionary containing fields extracted from document
+        model_path: Path to the pickle file containing the loan approval model
+        
+    Returns:
+        Dictionary with loan approval decision and details
+    """
+    loan_decision = {
+        "approved": False,
+        "approvalScore": 0,
+        "reasonCodes": [],
+        "recommendedActionItems": []
+    }
+    
+    try:
+        # Load the model from the pickle file
+        with open(model_path, 'rb') as model_file:
+            model = pickle.load(model_file)
+        
+        # Create a dataframe with the required features for the model
+        features = pd.DataFrame({
+            'income': [extracted_fields.get('income', 0)],
+            'credit_score': [extracted_fields.get('creditScore', 0)],
+            'loan_amount': [extracted_fields.get('loanAmount', 0)],
+            'employment_years': [extracted_fields.get('employmentYears', 0)],
+            'existing_debt': [extracted_fields.get('existingDebts', 0)]
+        })
+        
+        # Get prediction from model
+        approval_score = model.predict_proba(features)[0][1]  # Probability of class 1 (approve)
+        loan_decision["approvalScore"] = float(approval_score)
+        
+        # Determine if loan is approved based on score threshold
+        if approval_score >= 0.7:  # 70% confidence threshold
+            loan_decision["approved"] = True
+            loan_decision["reasonCodes"].append("High approval confidence score")
+        else:
+            loan_decision["approved"] = False
+            
+            # Add reason codes based on extracted fields
+            if extracted_fields.get('income', 0) < 50000:
+                loan_decision["reasonCodes"].append("Insufficient income")
+                loan_decision["recommendedActionItems"].append("Provide proof of additional income sources")
+                
+            if extracted_fields.get('creditScore', 0) < 650:
+                loan_decision["reasonCodes"].append("Credit score below threshold")
+                loan_decision["recommendedActionItems"].append("Improve credit score before reapplying")
+                
+            if extracted_fields.get('loanAmount', 0) > 0.5 * extracted_fields.get('income', 0):
+                loan_decision["reasonCodes"].append("Loan amount too high relative to income")
+                loan_decision["recommendedActionItems"].append("Consider applying for a smaller loan amount")
+                
+            if extracted_fields.get('employmentYears', 0) < 2:
+                loan_decision["reasonCodes"].append("Insufficient employment history")
+                loan_decision["recommendedActionItems"].append("Provide additional employment verification")
+                
+            if not loan_decision["reasonCodes"]:
+                loan_decision["reasonCodes"].append("Combined factors led to rejection")
+                
+    except Exception as e:
+        loan_decision["reasonCodes"].append(f"Error processing loan approval: {str(e)}")
+        loan_decision["recommendedActionItems"].append("Contact customer support for assistance")
+        
+    return loan_decision
+
 def main():
-    """
-    Main function for the document processor script
-    """
-    parser = argparse.ArgumentParser(description='Process loan application documents')
-    parser.add_argument('--application_id', required=True, help='Loan application ID')
-    parser.add_argument('--document_ids', required=True, help='Comma-separated Cloudinary document IDs')
-    parser.add_argument('--output', default='json', choices=['json', 'db'], help='Output format')
-    parser.add_argument('--config', default='config.json', help='Path to configuration file')
+    parser = argparse.ArgumentParser(description='Document Processing Script')
+    parser.add_argument('--document', required=True, help='Path to the document file')
+    parser.add_argument('--config', required=True, help='Path to the configuration file')
+    parser.add_argument('--model', required=True, help='Path to the loan approval model file')
     
     args = parser.parse_args()
     
-    # Load configuration
     try:
-        with open(args.config, 'r') as f:
-            config = json.load(f)
+        # Load configuration
+        with open(args.config, 'r') as config_file:
+            config = json.load(config_file)
+            
+        # Validate document
+        validation_results = validate_document(args.document, config)
+        
+        # If document is valid, determine loan approval
+        if validation_results["isValid"]:
+            loan_decision = determine_loan_approval(validation_results["extractedFields"], args.model)
+            validation_results["loanDecision"] = loan_decision
+        
+        # Output results as JSON
+        print(json.dumps(validation_results))
+        
     except Exception as e:
-        logger.error(f"Error loading configuration: {e}")
-        sys.exit(1)
-    
-    # Initialize document processor
-    cloudinary_config = config.get('cloudinary', {})
-    mongodb_config = config.get('mongodb', {}) if args.output == 'db' else None
-    
-    processor = DocumentProcessor(cloudinary_config, mongodb_config)
-    
-    # Process documents
-    document_ids = args.document_ids.split(',')
-    results = processor.fetch_and_process_documents(args.application_id, document_ids)
-    
-    # Output results
-    if args.output == 'json':
-        print(json.dumps(results, indent=2))
-    elif args.output == 'db':
-        processor.save_results(args.application_id, results)
-    
-    # Exit with status code based on validation
-    if results['validation_status'] == 'VALID':
-        sys.exit(0)
-    else:
-        sys.exit(1)
+        error_response = {
+            "isValid": False,
+            "errorMessages": [f"Script execution error: {str(e)}"],
+            "extractedFields": {}
+        }
+        print(json.dumps(error_response))
+        return 1
+        
+    return 0
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

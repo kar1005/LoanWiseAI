@@ -46,22 +46,10 @@ public class DocumentProcessingService {
     @Autowired
     private ObjectMapper objectMapper;
 
-    /**
-     * Process documents for a loan application asynchronously
-     *
-     * @param applicationId the loan application ID
-     * @return CompletableFuture with document validation result
-     */
     public CompletableFuture<ValidationLog> processDocumentsAsync(String applicationId) {
         return CompletableFuture.supplyAsync(() -> processDocuments(applicationId));
     }
 
-    /**
-     * Process documents for a loan application
-     *
-     * @param applicationId the loan application ID
-     * @return document validation result
-     */
     public ValidationLog processDocuments(String applicationId) {
         logger.info("Processing documents for application ID: {}", applicationId);
         
@@ -127,13 +115,6 @@ public class DocumentProcessingService {
         }
     }
     
-    /**
-     * Create validation result from the Python script output
-     *
-     * @param applicationId the loan application ID
-     * @param resultMap the result map from Python script
-     * @return document validation result
-     */
     @SuppressWarnings("unchecked")
     private ValidationLog createValidationResult(String applicationId, Map<String, Object> resultMap) {
         ValidationLog result = new ValidationLog();

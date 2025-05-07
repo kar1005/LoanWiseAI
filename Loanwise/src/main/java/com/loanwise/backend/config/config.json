@@ -1,11 +1,44 @@
 {
-    "cloudinary": {
-      "cloud_name": "doj1sg3yx",
-      "api_key": "744977877484216",
-      "api_secret": "0WAF7k_HSOxNI_lisOH51zm_Rjw"
-    },
-    "mongodb": {
-      "connection_string": "mongodb+srv://khushiruparelia2004:r5SjVJm2Pa18rpHt@cluster0.wnod7hj.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0",
-      "database": "LoanwiseAI"
+  "cloudinary": {
+    "cloud_name": "doj1sg3yx",
+    "api_key": "744977877484216",
+    "api_secret": "0WAF7k_HSOxNI_lisOH51zm_Rjw"
+  },
+  "mongodb": {
+    "connection_string": "mongodb+srv://khushiruparelia2004:r5SjVJm2Pa18rpHt@cluster0.wnod7hj.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0",
+    "database": "LoanWiseAI"
+  },
+  "document_processing": {
+    "requiredFields": [
+      "applicantName",
+      "income",
+      "creditScore",
+      "loanAmount",
+      "employmentYears",
+      "existingDebts"
+    ],
+    "validation_rules": {
+      "income": {
+        "type": "numeric",
+        "min": 10000
+      },
+      "creditScore": {
+        "type": "numeric",
+        "min": 300,
+        "max": 850
+      },
+      "loanAmount": {
+        "type": "numeric",
+        "min": 1000
+      }
     }
+  },
+  "loan_model": {
+    "model_path": "./models/loan_approval_model.pkl",
+    "approval_threshold": 0.7,
+    "income_threshold": 50000,
+    "credit_score_threshold": 650,
+    "debt_to_income_ratio": 0.5,
+    "min_employment_years": 2
   }
+}

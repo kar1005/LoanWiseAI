@@ -9,7 +9,6 @@ import com.loanwise.backend.models.application.LoanApplication;
 
 @Repository
 public interface ILoanApplicationRepository extends MongoRepository<LoanApplication, String> {
-    List<LoanApplication> findByApplicantName(String applicantName);
+    List<LoanApplication> findByApplicantEmail(String email);
     List<LoanApplication> findByStatus(String status);
-    List<LoanApplication> findByDocumentsValidated(boolean documentsValidated);
 }

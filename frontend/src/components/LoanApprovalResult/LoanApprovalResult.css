@@ -1,0 +1,253 @@
+.loan-result-container {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.loan-result-container h1 {
+    text-align: center;
+    color: #2b6cb0;
+    margin-bottom: 2rem;
+    font-size: 2rem;
+}
+
+.loan-result-container h2 {
+    color: #2d3748;
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid #edf2f7;
+    padding-bottom: 0.5rem;
+}
+
+.loading-spinner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 0;
+}
+
+.spinner {
+    border: 5px solid #f3f3f3;
+    border-top: 5px solid #3498db;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    animation: spin 1s linear infinite;
+    margin-bottom: 1rem;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.error-container {
+    text-align: center;
+    padding: 2rem;
+    background-color: #fff5f5;
+    border-radius: 8px;
+    border: 1px solid #feb2b2;
+}
+
+.error-container h2 {
+    color: #c53030;
+    border-bottom: none;
+}
+
+.info-card {
+    background-color: #f8fafc;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #edf2f7;
+}
+
+.info-row:last-child {
+    border-bottom: none;
+}
+
+.info-row span:first-child {
+    font-weight: 600;
+    color: #4a5568;
+}
+
+.status {
+    font-weight: 700;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+}
+
+.status.PENDING {
+    background-color: #fefcbf;
+    color: #744210;
+}
+
+.status.APPROVED {
+    background-color: #c6f6d5;
+    color: #22543d;
+}
+
+.status.REJECTED {
+    background-color: #fed7d7;
+    color: #822727;
+}
+
+.action-container {
+    text-align: center;
+    margin: 2rem 0;
+    padding: 1.5rem;
+    background-color: #ebf8ff;
+    border-radius: 8px;
+    border: 1px solid #bee3f8;
+}
+
+.validation-results {
+    margin-top: 2rem;
+}
+
+.result-card {
+    display: flex;
+    align-items: center;
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+}
+
+.result-card.approved {
+    background-color: #f0fff4;
+    border: 1px solid #c6f6d5;
+}
+
+.result-card.rejected {
+    background-color: #fff5f5;
+    border: 1px solid #fed7d7;
+}
+
+.result-icon {
+    font-size: 3rem;
+    margin-right: 1.5rem;
+}
+
+.result-card.approved .result-icon {
+    color: #38a169;
+}
+
+.result-card.rejected .result-icon {
+    color: #e53e3e;
+}
+
+.result-content {
+    flex: 1;
+}
+
+.result-content h3 {
+    font-size: 1.25rem;
+    margin-bottom: 0.5rem;
+}
+
+.result-card.approved h3 {
+    color: #2f855a;
+}
+
+.result-card.rejected h3 {
+    color: #c53030;
+}
+
+.validation-date {
+    font-size: 0.875rem;
+    color: #718096;
+    margin-top: 0.75rem;
+}
+
+.next-steps {
+    background-color: #f7fafc;
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+}
+
+.next-steps h3 {
+    font-size: 1.25rem;
+    color: #2d3748;
+    margin-bottom: 0.75rem;
+}
+
+.action-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
+.btn {
+    display: inline-block;
+    padding: 0.75rem 1.5rem;
+    background-color: #e2e8f0;
+    color: #2d3748;
+    font-weight: 600;
+    border-radius: 6px;
+    text-decoration: none;
+    transition: all 0.2s;
+    cursor: pointer;
+    border: none;
+    font-size: 1rem;
+    text-align: center;
+}
+
+.btn:hover {
+    background-color: #cbd5e0;
+}
+
+.btn.primary {
+    background-color: #4299e1;
+    color: white;
+}
+
+.btn.primary:hover {
+    background-color: #3182ce;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .loan-result-container {
+        padding: 1.5rem;
+        margin: 1rem;
+    }
+    
+    .info-row {
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+    
+    .result-card {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .result-icon {
+        margin-right: 0;
+        margin-bottom: 1rem;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    
+    .btn {
+        width: 100%;
+    }
+}

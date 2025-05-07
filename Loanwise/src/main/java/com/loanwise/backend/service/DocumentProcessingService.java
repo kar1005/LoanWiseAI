@@ -1,184 +1,111 @@
 package com.loanwise.backend.service;
 
-import java.io.BufferedReader;
+import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
+import com.loanwise.backend.models.document.Documents;
+import com.loanwise.backend.repository.interfaces.document.IDocumentRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.loanwise.backend.models.application.LoanApplication;
-import com.loanwise.backend.models.validation.ValidationLog;
-import com.loanwise.backend.repository.interfaces.application.ILoanApplicationRepository;
-import com.loanwise.backend.repository.interfaces.validation.IValidationLogRepository;
-
-/**
- * Service for processing and validating loan application documents
- */
 @Service
+@RequiredArgsConstructor
+@Slf4j
 public class DocumentProcessingService {
 
-    private static final Logger logger = LoggerFactory.getLogger(DocumentProcessingService.class);
+    private final IDocumentRepository documentRepository;
+    private final Cloudinary cloudinary;
 
-    @Value("${python.script.path}")
-    private String pythonScriptPath;
-    
-    @Value("${python.executable.path:python}")
-    private String pythonExecutablePath;
-    
-    @Value("${config.file.path}")
-    private String configFilePath;
-
-    @Autowired
-    private ILoanApplicationRepository loanApplicationRepository;
-    
-    @Autowired
-    private IValidationLogRepository validationLogRepository;
-    
-    @Autowired
-    private ObjectMapper objectMapper;
-
-    public CompletableFuture<ValidationLog> processDocumentsAsync(String applicationId) {
-        return CompletableFuture.supplyAsync(() -> processDocuments(applicationId));
-    }
-
-    public ValidationLog processDocuments(String applicationId) {
-        logger.info("Processing documents for application ID: {}", applicationId);
+    /**
+     * Upload multiple files to Cloudinary
+     * @param files List of files to upload
+     * @return Map of original filenames to Cloudinary URLs
+     */
+    public Map<String, String> uploadToCloudinary(List<MultipartFile> files) throws IOException {
+        Map<String, String> urlMap = new HashMap<>();
         
-        try {
-            // Fetch loan application to get document IDs
-            LoanApplication application = loanApplicationRepository.findById(applicationId)
-                    .orElseThrow(() -> new IllegalArgumentException("Loan application not found"));
-            
-            // Get document IDs from the application
-            List<String> documentIds = application.getDocumentIds();
-            if (documentIds == null || documentIds.isEmpty()) {
-                throw new IllegalStateException("No documents found for processing");
+        for (MultipartFile file : files) {
+            if (!file.isEmpty()) {
+                log.info("Uploading file {} to Cloudinary", file.getOriginalFilename());
+                Map<?, ?> uploadResult = cloudinary.uploader().upload(
+                    file.getBytes(),
+                    ObjectUtils.asMap(
+                        "folder", "loanwise",
+                        "resource_type", "auto"
+                    )
+                );
+                
+                String publicId = (String) uploadResult.get("public_id");
+                String url = (String) uploadResult.get("secure_url");
+                urlMap.put(file.getOriginalFilename(), url + "||" + publicId);
+                log.info("File {} uploaded successfully", file.getOriginalFilename());
             }
-            
-            // Construct command to execute Python script
-            String documentIdsParam = String.join(",", documentIds);
-            List<String> command = new ArrayList<>();
-            command.add(pythonExecutablePath);
-            command.add(pythonScriptPath);
-            command.add("--application_id");
-            command.add(applicationId);
-            command.add("--document_ids");
-            command.add(documentIdsParam);
-            command.add("--output");
-            command.add("json");
-            command.add("--config");
-            command.add(configFilePath);
-            
-            logger.debug("Executing command: {}", String.join(" ", command));
-            
-            // Execute the Python script
-            ProcessBuilder processBuilder = new ProcessBuilder(command);
-            Process process = processBuilder.start();
-            
-            // Read the output
-            StringBuilder output = new StringBuilder();
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    output.append(line).append("\n");
-                }
-            }
-            
-            // Get the exit code
-            int exitCode = process.waitFor();
-            logger.debug("Python script execution completed with exit code: {}", exitCode);
-            
-            // Parse the result
-            String jsonOutput = output.toString().trim();
-            Map<String, Object> resultMap = objectMapper.readValue(jsonOutput, Map.class);
-            
-            // Create and save the validation result
-            ValidationLog result = createValidationResult(applicationId, resultMap);
-            validationLogRepository.save(result);
-            
-            // Update loan application with extracted information
-            updateLoanApplicationWithExtractedInfo(application, resultMap);
-            
-            return result;
-        } catch (IOException | InterruptedException e) {
-            logger.error("Error executing Python script: {}", e.getMessage(), e);
-            throw new RuntimeException("Document processing failed", e);
-        }
-    }
-    
-    @SuppressWarnings("unchecked")
-    private ValidationLog createValidationResult(String applicationId, Map<String, Object> resultMap) {
-        ValidationLog result = new ValidationLog();
-        result.setApplicationId(applicationId);
-        result.setProcessingDate((String) resultMap.get("processing_date"));
-        result.setValidationStatus((String) resultMap.get("validation_status"));
-        
-        // Get validation summary
-        Map<String, Object> summary = (Map<String, Object>) resultMap.get("validation_summary");
-        if (summary != null) {
-            result.setValidDocuments((Integer) summary.get("valid_documents"));
-            result.setInvalidDocuments((Integer) summary.get("invalid_documents"));
-            result.setMissingDocuments((List<String>) summary.get("missing_documents"));
         }
         
-        // Save the complete result as JSON
-        try {
-            result.setFullResult(objectMapper.writeValueAsString(resultMap));
-        } catch (Exception e) {
-            logger.error("Error serializing result: {}", e.getMessage());
-        }
-        
-        return result;
+        return urlMap;
     }
     
     /**
-     * Update loan application with extracted information
-     *
-     * @param application the loan application
-     * @param resultMap the result map from Python script
+     * Process uploaded documents and save their metadata
+     * @param applicationId ID of the loan application
+     * @param cloudinaryUrls Map of filenames to Cloudinary URLs with public IDs
+     * @param documentTypes List of document types
      */
-    @SuppressWarnings("unchecked")
-    private void updateLoanApplicationWithExtractedInfo(LoanApplication application, Map<String, Object> resultMap) {
-        Map<String, Object> extractedInfo = (Map<String, Object>) resultMap.get("extracted_info");
-        if (extractedInfo == null) {
-            return;
+    public void processAndSaveDocuments(String applicationId, Map<String, String> cloudinaryUrls, List<String> documentTypes) {
+        List<Document> documents = new ArrayList<>();
+        
+        int i = 0;
+        for (Map.Entry<String, String> entry : cloudinaryUrls.entrySet()) {
+            String[] parts = entry.getValue().split("\\|\\|");
+            String url = parts[0];
+            String publicId = parts[1];
+            
+            String documentType = (i < documentTypes.size()) ? documentTypes.get(i) : "UNKNOWN";
+            
+            Documents document = new Documents(applicationId, documentType, url, publicId);
+            documents.add(document);
+            i++;
         }
         
-        // Update with extracted information
-        if (extractedInfo.containsKey("aadhaar_number")) {
-            application.setAadhaarNumber((String) extractedInfo.get("aadhaar_number"));
-        }
+        documentRepository.saveAll(documents);
+        log.info("Saved {} documents for application ID: {}", documents.size(), applicationId);
+    }
+    
+    /**
+     * Delete a document from Cloudinary and database
+     * @param documentId ID of the document to delete
+     */
+    public void deleteDocument(String documentId) throws IOException {
+        Document document = documentRepository.findById(documentId)
+            .orElseThrow(() -> new IllegalArgumentException("Document not found with ID: " + documentId));
         
-        if (extractedInfo.containsKey("pan_number")) {
-            application.setPanNumber((String) extractedInfo.get("pan_number"));
-        }
+        // Delete from Cloudinary
+        log.info("Deleting document with public ID {} from Cloudinary", document.getCloudinaryPublicId());
+        cloudinary.uploader().destroy(
+            document.getCloudinaryPublicId(),
+            ObjectUtils.emptyMap()
+        );
         
-        if (extractedInfo.containsKey("age")) {
-            application.setAge((Integer) extractedInfo.get("age"));
-        }
-        
-        if (extractedInfo.containsKey("annual_income")) {
-            application.setAnnualIncome((Double) extractedInfo.get("annual_income"));
-        }
-        
-        if (extractedInfo.containsKey("existing_loans")) {
-            application.setExistingLoans((List<String>) extractedInfo.get("existing_loans"));
-        }
-        
-        // Update document validation status
-        application.setDocumentsValidated(true);
-        application.setDocumentValidationStatus((String) resultMap.get("validation_status"));
-        
-        // Save the updated application
-        loanApplicationRepository.save(application);
+        // Delete from database
+        documentRepository.delete(document);
+        log.info("Document with ID {} deleted successfully", documentId);
+    }
+    
+    /**
+     * Get all documents for a loan application
+     * @param applicationId ID of the loan application
+     * @return List of documents
+     */
+    public List<Document> getDocumentsByApplicationId(String applicationId) {
+        List<Document> documents = documentRepository.findByApplicationId(applicationId);
+        log.info("Found {} documents for application ID: {}", documents.size(), applicationId);
+        return documents;
     }
 }

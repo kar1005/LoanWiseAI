@@ -10,6 +10,6 @@ import com.loanwise.backend.models.validation.ValidationLog;
 
 @Repository
 public interface IValidationLogRepository extends MongoRepository<ValidationLog, String> {
-    Optional<ValidationLog> findByApplicationId(String applicationId);
     List<ValidationLog> findByValidationStatus(String validationStatus);
+    Optional<ValidationLog> findByApplicationId(Long applicationId);
 }

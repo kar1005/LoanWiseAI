@@ -1,33 +1,26 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route , Navigate} from 'react-router-dom';
-import { Provider } from 'react-redux';
-import { store } from './redux/store';
-import Header from './components/common/Header/Header';
-
-import Login from './components/Login/Login';
-import Register from './components/Register/Register';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import LoanApplicationForm from './components/LoanApplicationForm/LoanApplicationForm';
+import LoanApprovalResult from './components/LoanApprovalResult/LoanApprovalResult';
 import Dashboard from './components/Dashboard/Dashboard';
+import Header from './components/common/Header/Header';
+import './App.css';
 
 function App() {
   return (
-    <div className="App">
-      <Provider store={store}>
-      <Router>
-        <Header />
-        <Routes>
-          {/* Public routes */}
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/loan-application" element={<LoanApplicationForm />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          {/* 404 route */}
-          {/* <Route path="*" element={<NotFound />} /> */}
-        </Routes>
-      </Router>
-    </Provider>
-    </div>
+    <Router>
+      <Header />
+      <div className="app-container">
+        <main className="main-content">
+          <Routes>
+            <Route path="/" element={<Navigate replace to="/dashboard" />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/loan-application" element={<LoanApplicationForm />} />
+            <Route path="/loan-approval/:applicationId" element={<LoanApprovalResult />} />
+          </Routes>
+        </main>
+      </div>
+    </Router>
   );
 }
 

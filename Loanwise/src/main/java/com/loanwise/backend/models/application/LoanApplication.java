@@ -1,52 +1,68 @@
 package com.loanwise.backend.models.application;
 
-import java.util.Date;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.DocumentReference;
+
+import com.loanwise.backend.models.document.Documents;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@Document(collection = "loan_applications")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Document(collection = "loan_applications")
 public class LoanApplication {
+    
     @Id
     private String id;
     
     private String applicantName;
-    private String email;
-    private String phoneNumber;
     
-    // Document related fields
-    private List<String> documentIds; // Cloudinary public IDs
-    private boolean documentsValidated;
-    private String documentValidationStatus;
+    private String applicantEmail;
     
-    // Extracted information
-    private String aadhaarNumber;
-    private String panNumber;
-    private Integer age;
-    private Double annualIncome;
-    private List<String> existingLoans;
+    private String applicantPhone;
     
-    // Loan details
-    private Double loanAmount;
+    private BigDecimal loanAmount;
+    
+    private Integer loanTermMonths;
+    
     private String loanPurpose;
     
-    // Application status
-    private String status; // PENDING, UNDER_REVIEW, APPROVED, REJECTED
-    private Date applicationDate;
-    private Date lastUpdated;
+    private String status;
     
-    // Additional fields
-    private Double creditScore;
-    private String remarks;
+    private LocalDateTime submittedAt;
     
+    private LocalDateTime updatedAt;
+    
+    @DocumentReference(lazy = true)
+    private List<Documents> documents;
+
+    // Custom constructor with fields
+    public LoanApplication(String applicantName, String applicantEmail, String applicantPhone, 
+                        BigDecimal loanAmount, Integer loanTermMonths, String loanPurpose) {
+        this.applicantName = applicantName;
+        this.applicantEmail = applicantEmail;
+        this.applicantPhone = applicantPhone;
+        this.loanAmount = loanAmount;
+        this.loanTermMonths = loanTermMonths;
+        this.loanPurpose = loanPurpose;
+        this.status = "NEW";
+        this.submittedAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+    }
+    
+    // Custom setter for status to update the timestamp automatically
+    public void setStatus(String status) {
+        this.status = status;
+        this.updatedAt = LocalDateTime.now();
+    }
 }

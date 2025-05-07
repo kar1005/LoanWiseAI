@@ -1,14 +1,10 @@
 package com.loanwise.backend.models.application;
 
-import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.List;
 
 import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
-
-import com.loanwise.backend.models.user.User;
-import com.loanwise.backend.models.validation.ValidationLog;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -24,34 +20,33 @@ public class LoanApplication {
     @Id
     private String id;
     
-    @DBRef
-    private User user;
+    private String applicantName;
+    private String email;
+    private String phoneNumber;
     
-    private Double income;
-    private Integer age;
+    // Document related fields
+    private List<String> documentIds; // Cloudinary public IDs
+    private boolean documentsValidated;
+    private String documentValidationStatus;
     
-    private Integer creditScore;
-    
-    private String employmentStatus;
-
-    private String aadharNumber;
-
+    // Extracted information
+    private String aadhaarNumber;
     private String panNumber;
+    private Integer age;
+    private Double annualIncome;
+    private List<String> existingLoans;
     
-    private Double requestedAmount;
+    // Loan details
+    private Double loanAmount;
+    private String loanPurpose;
     
-    private Double existingLoans;
+    // Application status
+    private String status; // PENDING, UNDER_REVIEW, APPROVED, REJECTED
+    private Date applicationDate;
+    private Date lastUpdated;
     
-    private String status; // Approved, Rejected, Needs Review
-    
-    private Double riskScore;
-    
-    @Builder.Default
-    private LocalDateTime createdAt = LocalDateTime.now();
-    
-    // Documents can be embedded directly within the loan application
-    private List<Document> documents;
-    
-    private List<ValidationLog> validationLogs;
+    // Additional fields
+    private Double creditScore;
+    private String remarks;
     
 }

@@ -1,0 +1,11 @@
+{
+    "cloudinary": {
+      "cloud_name": "doj1sg3yx",
+      "api_key": "744977877484216",
+      "api_secret": "0WAF7k_HSOxNI_lisOH51zm_Rjw"
+    },
+    "mongodb": {
+      "connection_string": "mongodb+srv://khushiruparelia2004:r5SjVJm2Pa18rpHt@cluster0.wnod7hj.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0",
+      "database": "LoanwiseAI"
+    }
+  }

@@ -1,88 +1,105 @@
 package com.loanwise.backend.controller.application;
 
+import com.loanwise.backend.models.application.LoanApplication;
+import com.loanwise.backend.models.document.Documents;
+import com.loanwise.backend.models.validation.ValidationLog;
+import com.loanwise.backend.service.CloudinaryService;
+import com.loanwise.backend.service.DocumentProcessingService;
+import com.loanwise.backend.service.LoanApplicationService;
+import com.loanwise.backend.service.PythonScriptService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.multipart.MultipartFile;
-
-import com.loanwise.backend.models.application.LoanApplication;
-import com.loanwise.backend.service.DocumentProcessingService;
-import com.loanwise.backend.service.LoanApplicationService;
-
-@RestController
-@RequestMapping("/api/loans")
+@Controller
+@CrossOrigin(origins = "*")
+@RequestMapping("/application")
+@RequiredArgsConstructor
 public class LoanApplicationController {
 
-    @Autowired
-    private LoanApplicationService loanApplicationService;
+    private final LoanApplicationService loanApplicationService;
+    private final PythonScriptService pythonScriptService;
+    private final DocumentProcessingService documentProcessingService;
+    private final CloudinaryService cloudinaryService;
 
-    @Autowired
-    private DocumentProcessingService documentProcessingService;
-
-    @PostMapping("/apply")
-    public ResponseEntity<?> submitLoanApplication(@RequestBody LoanApplication application) {
-        try {
-            LoanApplication submitted = loanApplicationService.submitApplication(application);
-            return ResponseEntity.ok(submitted);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Error submitting application: " + e.getMessage());
-        }
+    @GetMapping("/new")
+    public String newApplication(Model model) {
+        model.addAttribute("application", new LoanApplication());
+        return "application/new";
     }
 
-    @PostMapping("/{applicationId}/documents")
-    public ResponseEntity<?> uploadDocuments(
-            @PathVariable String applicationId,
-            @RequestParam("files") List<MultipartFile> files,
-            @RequestParam("documentTypes") List<String> documentTypes) {
+    @PostMapping("/submit")
+    public String submitApplication(
+            @ModelAttribute LoanApplication application,
+            @RequestParam("files") MultipartFile[] files,
+            RedirectAttributes redirectAttributes) {
+        
         try {
-            Map<String, String> cloudinaryUrls = documentProcessingService.uploadToCloudinary(files);
-            documentProcessingService.processAndSaveDocuments(applicationId, cloudinaryUrls, documentTypes);
-            return ResponseEntity.ok(cloudinaryUrls);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Error uploading documents to Cloudinary: " + e.getMessage());
-        }
-    }
-
-    @PostMapping("/{applicationId}/verify")
-    public ResponseEntity<?> verifyApplication(@PathVariable String applicationId) {
-        try {
-            boolean verified = loanApplicationService.verifyApplication(applicationId);
-            if (verified) {
-                return ResponseEntity.ok("Application verified successfully");
-            } else {
-                return ResponseEntity.badRequest().body("Verification failed");
+            // Save the application first to get the ID
+            LoanApplication savedApplication = loanApplicationService.submitApplication(application);
+            
+            // Process each file and upload to Cloudinary
+            List<Documents> documentsList = new ArrayList<>();
+            for (MultipartFile file : files) {
+                if (!file.isEmpty()) {
+                    // Upload file to Cloudinary
+                    String cloudinaryUrl = cloudinaryService.uploadFile(file);
+                    
+                    // Create document record
+                    Documents document = new Documents();
+                    document.setDocumentType(file.getContentType());
+                    document.setCloudinaryUrl(cloudinaryUrl);
+                    document.setApplicationId(savedApplication.getId());
+                    
+                    documentsList.add(document);
+                }
             }
+            
+            // Save documents to MongoDB
+            documentsList = documentProcessingService.saveDocuments(documentsList);
+            
+            // Associate documents with the application
+            savedApplication.setDocuments(documentsList);
+            loanApplicationService.updateApplication(savedApplication);
+            
+            // Process documents with Python script
+            Map<String, Object> results = documentProcessingService.processDocuments(documentsList);
+            
+            // Create validation log
+            ValidationLog validationLog = new ValidationLog();
+            validationLog.setApplicationId(savedApplication.getId());
+            validationLog.setValidationResults(results);
+            documentProcessingService.saveValidationLog(validationLog);
+            
+            // Redirect to results page
+            redirectAttributes.addFlashAttribute("applicationId", savedApplication.getId());
+            return "redirect:/application/results";
+            
+        } catch (IOException e) {
+            redirectAttributes.addFlashAttribute("error", "Error uploading files: " + e.getMessage());
+            return "redirect:/application/new";
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Error verifying application: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("error", "Error processing application: " + e.getMessage());
+            return "redirect:/application/new";
         }
     }
-
-    @GetMapping("/{applicationId}")
-    public ResponseEntity<?> getApplication(@PathVariable String applicationId) {
-        try {
-            LoanApplication application = loanApplicationService.getApplicationById(applicationId);
-            return ResponseEntity.ok(application);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Error retrieving application: " + e.getMessage());
-        }
-    }
-
-    @GetMapping("/{applicationId}/status")
-    public ResponseEntity<?> getApplicationStatus(@PathVariable String applicationId) {
-        try {
-            String status = loanApplicationService.getApplicationStatus(applicationId);
-            return ResponseEntity.ok(status);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Error retrieving status: " + e.getMessage());
-        }
+    
+    @GetMapping("/results")
+    public String showResults(@ModelAttribute("applicationId") String applicationId, Model model) {
+        LoanApplication application = loanApplicationService.getApplicationById(applicationId);
+        ValidationLog validationLog = documentProcessingService.getValidationLogByApplicationId(applicationId);
+        
+        model.addAttribute("application", application);
+        model.addAttribute("validationLog", validationLog);
+        
+        return "application/results";
     }
 }

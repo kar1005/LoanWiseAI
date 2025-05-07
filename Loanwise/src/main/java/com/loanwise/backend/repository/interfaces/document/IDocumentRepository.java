@@ -10,5 +10,5 @@ import com.loanwise.backend.models.document.Documents;
 
 @Repository
 public interface IDocumentRepository extends MongoRepository<Documents, String> {
-    List<Documents> findByApplicationId(String applicationId);
+   List<Documents> findByApplicationId(String applicationId);
 }

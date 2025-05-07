@@ -8,11 +8,12 @@ const LoanApplicationForm = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState('');
     const [files, setFiles] = useState({
-        identityProof: null,
-        addressProof: null,
+        aadharCard: null,
+        panCard: null,
         incomeProof: null,
         bankStatements: null
     });
+    axios.defaults.baseURL = 'http://localhost:8080'; // Set your backend URL here
     
     const [formData, setFormData] = useState({
         userId: localStorage.getItem('userId') ,
@@ -60,11 +61,7 @@ const LoanApplicationForm = () => {
         setError('');
         
         try {
-            // Step 1: Submit loan application
-            const applicationResponse = await axios.post('/api/loan/submit', formData);
-            const applicationId = applicationResponse.data.id;
-            
-            // Step 2: Upload documents
+
             if (Object.values(files).some(file => file !== null)) {
                 const formDataFiles = new FormData();
                 const documentTypes = [];
@@ -76,14 +73,13 @@ const LoanApplicationForm = () => {
                         documentTypes.push(type);
                     }
                 });
-                
-                // Add document types
                 documentTypes.forEach(type => {
                     formDataFiles.append('documentTypes', type);
                 });
-                
-                await axios.post(`/api/loan/${applicationId}/upload-documents`, formDataFiles);
             }
+            const applicationResponse = await axios.post('/api/application/submit', formData);
+            const applicationId = applicationResponse.data.id;
+            
             
             // Navigate to results page
             navigate(`/loan-approval/${applicationId}`);
@@ -395,11 +391,11 @@ const LoanApplicationForm = () => {
                     <p className="document-info">Please upload the following documents to expedite your loan approval process.</p>
                     
                     <div className="form-group">
-                        <label htmlFor="identityProof">Identity Proof (Passport, Driver's License, etc.)</label>
+                        <label htmlFor="identityProof">Aadhar Card</label>
                         <input
                             type="file"
-                            id="identityProof"
-                            name="identityProof"
+                            id="aadharCard"
+                            name="aadharCard"
                             onChange={handleFileChange}
                             accept=".pdf,.jpg,.jpeg,.png"
                             required
@@ -407,11 +403,11 @@ const LoanApplicationForm = () => {
                     </div>
                     
                     <div className="form-group">
-                        <label htmlFor="addressProof">Address Proof (Utility Bill, Rental Agreement, etc.)</label>
+                        <label htmlFor="addressProof">PAN Card</label>
                         <input
                             type="file"
-                            id="addressProof"
-                            name="addressProof"
+                            id="panCard"
+                            name="panCard"
                             onChange={handleFileChange}
                             accept=".pdf,.jpg,.jpeg,.png"
                             required
@@ -419,7 +415,7 @@ const LoanApplicationForm = () => {
                     </div>
                     
                     <div className="form-group">
-                        <label htmlFor="incomeProof">Income Proof (Pay Stubs, Tax Returns, etc.)</label>
+                        <label htmlFor="incomeProof">Income Tax Return</label>
                         <input
                             type="file"
                             id="incomeProof"
@@ -431,7 +427,7 @@ const LoanApplicationForm = () => {
                     </div>
                     
                     <div className="form-group">
-                        <label htmlFor="bankStatements">Bank Statements (Last 3 months)</label>
+                        <label htmlFor="bankStatements">Bank Statements (Last 6 months)</label>
                         <input
                             type="file"
                             id="bankStatements"

@@ -1,5 +1,6 @@
 package com.loanwise.backend.service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -100,5 +101,23 @@ public class LoanApplicationService {
         LoanApplication application = getApplicationById(applicationId);
         application.setStatus(newStatus);
         return loanApplicationRepository.save(application);
+    }
+    public LoanApplication updateApplication(LoanApplication application) {
+        log.info("Updating loan application with ID: {}", application.getId());
+        
+        // Fetch the existing application to validate it exists
+        loanApplicationRepository.findById(application.getId())
+            .orElseThrow(() -> {
+                log.error("Cannot update application. Application not found with ID: {}", application.getId());
+                return new IllegalArgumentException("Application not found with ID: " + application.getId());
+            });
+        
+        // The LoanApplication's setStatus method automatically updates the updatedAt timestamp
+        // No need to manually set updatedAt here as it should be handled by the model
+        
+        LoanApplication updated = loanApplicationRepository.save(application);
+        log.info("Loan application updated successfully: {}", updated.getId());
+        
+        return updated;
     }
 }

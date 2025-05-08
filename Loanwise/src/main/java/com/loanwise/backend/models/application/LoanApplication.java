@@ -1,14 +1,9 @@
 package com.loanwise.backend.models.application;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.List;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
-import org.springframework.data.mongodb.core.mapping.DocumentReference;
-
-import com.loanwise.backend.models.document.Documents;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -32,8 +27,10 @@ public class LoanApplication {
     private String applicantEmail;
     
     private String applicantPhone;
+
+    private Double annualIncome;
     
-    private BigDecimal loanAmount;
+    private Double loanAmount;
     
     private Integer loanTermMonths;
     
@@ -44,12 +41,28 @@ public class LoanApplication {
     private LocalDateTime submittedAt;
     
     private LocalDateTime updatedAt;
-    
-    @DocumentReference(lazy = true)
-    private List<Documents> documents;
 
-    // Custom constructor with fields
-    public LoanApplication(String userId, String applicantName, String applicantEmail, String applicantPhone,  BigDecimal loanAmount, Integer loanTermMonths, String loanPurpose) {
+    private String employmentStatus;
+    
+
+    private String aadharUrl;
+
+    private String panUrl;
+
+    private String itrUrl;
+
+    private String bankStatementUrl; 
+
+    private String address;
+
+    private String city;
+
+    private String state;
+
+    private String zipCode;
+
+
+    public LoanApplication(String userId, String applicantName, String applicantEmail, String applicantPhone,  Double loanAmount, Integer loanTermMonths, String loanPurpose) {
         this.userId = userId;
         this.applicantName = applicantName;
         this.applicantEmail = applicantEmail;

@@ -16,7 +16,7 @@ const LoanApplicationForm = () => {
     });// Set your backend URL here
     
     const [formData, setFormData] = useState({
-        userId: localStorage.getItem('userId') ,
+        userId: localStorage.getItem('user').id ,
         firstName: '',
         lastName: '',
         email: '',
@@ -86,7 +86,7 @@ const LoanApplicationForm = () => {
             
         } catch (err) {
             setError('Failed to submit loan application. ' + 
-                (err.response?.data || err.message));
+                (err.response || err.message));
             setIsSubmitting(false);
         }
     };

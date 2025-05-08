@@ -30,8 +30,8 @@ body {
     font-weight: 700;
 }
 
-.apply-button {
-    background-color: #4361ee;
+.logout-button {
+    background-color: #f72585;
     color: white;
     border: none;
     padding: 0.7rem 1.5rem;
@@ -43,13 +43,13 @@ body {
     letter-spacing: 0.5px;
 }
 
-.apply-button:hover {
-    background-color: #3a56d4;
+.logout-button:hover {
+    background-color: #e5177b;
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
-.apply-button:active {
+.logout-button:active {
     transform: translateY(0);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
@@ -64,7 +64,7 @@ body {
         font-size: 1.5rem;
     }
     
-    .apply-button {
+    .logout-button {
         padding: 0.6rem 1.2rem;
         font-size: 0.9rem;
     }

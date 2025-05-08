@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './LoanApplicationForm.css';
+import loanApplicationService from '../../services/loanApplicationService';
 
 const LoanApplicationForm = () => {
     const navigate = useNavigate();
@@ -12,8 +13,7 @@ const LoanApplicationForm = () => {
         panCard: null,
         incomeProof: null,
         bankStatements: null
-    });
-    axios.defaults.baseURL = 'http://localhost:8080'; // Set your backend URL here
+    });// Set your backend URL here
     
     const [formData, setFormData] = useState({
         userId: localStorage.getItem('userId') ,
@@ -77,8 +77,8 @@ const LoanApplicationForm = () => {
                     formDataFiles.append('documentTypes', type);
                 });
             }
-            const applicationResponse = await axios.post('/api/application/submit', formData);
-            const applicationId = applicationResponse.data.id;
+            const applicationResponse = await loanApplicationService.submitApplication(formData);
+            const applicationId = applicationResponse.id;
             
             
             // Navigate to results page

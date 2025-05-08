@@ -1,17 +1,24 @@
 import React from 'react';
 import './Header.css';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import { logout } from '../../../redux/slices/authSlice';
 
 const Header = () => {
   const navigate = useNavigate();
-
-  const handleApplyClick = () => {
-    navigate('/loan-application');
-  }
+  const dispatch = useDispatch();
+  const handleLogout = () => {
+    dispatch(logout());
+    navigate('/login');
+  };
+  const token = localStorage.getItem('LoanWisetoken');
+  
   return (
     <header className="header">
       <div className="logo">Loan<span>Wise</span>AI</div>
-      <button className="apply-button" onClick={handleApplyClick}>Apply for Loan</button>
+      {token && (
+        <button className="logout-button" onClick={handleLogout}>Logout</button>
+      )}
     </header>
   );
 };

@@ -9,12 +9,12 @@ const Dashboard = () => {
     const [error, setError] = useState(null);
     
     // Mock user ID for demo purposes
-    const userId = localStorage.getItem('userId') || 1;
+    const userId = localStorage.getItem('user') || 1;
     
     useEffect(() => {
         const fetchApplications = async () => {
             try {
-                const response = await axios.get(`/api/loan/user/${userId}`);
+                const response = await axios.get(`/api/application/user/${userId}`);
                 setApplications(response.data);
                 setLoading(false);
             } catch (err) {

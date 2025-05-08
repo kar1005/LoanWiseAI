@@ -37,10 +37,7 @@ const authService = {
   },
 
   // Logout (client-side only - no API call needed as JWT is stateless)
-  logout: () => {
-    // This is handled in the Redux action
-    return true;
-  }
+  
 };
 
 export default authService;

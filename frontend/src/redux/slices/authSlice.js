@@ -15,7 +15,7 @@ export const register = createAsyncThunk(
       const response = await authService.register(userData);
       
       // Store auth data in localStorage
-      localStorage.setItem('token', response.token);
+      localStorage.setItem('LoanWisetoken', response.token);
       localStorage.setItem('user', JSON.stringify(response.user));
       
       return response;
@@ -69,7 +69,7 @@ const authSlice = createSlice({
   reducers: {
     logout: (state) => {
       // Remove auth data from localStorage
-      localStorage.removeItem('token');
+      localStorage.removeItem('LoanWisetoken');
       localStorage.removeItem('user');
       
       // Reset state

@@ -25,6 +25,8 @@ public class LoanApplication {
     @Id
     private String id;
     
+    private String userId;  // Added userId field to track which user submitted the application
+    
     private String applicantName;
     
     private String applicantEmail;
@@ -47,8 +49,8 @@ public class LoanApplication {
     private List<Documents> documents;
 
     // Custom constructor with fields
-    public LoanApplication(String applicantName, String applicantEmail, String applicantPhone, 
-                        BigDecimal loanAmount, Integer loanTermMonths, String loanPurpose) {
+    public LoanApplication(String userId, String applicantName, String applicantEmail, String applicantPhone,  BigDecimal loanAmount, Integer loanTermMonths, String loanPurpose) {
+        this.userId = userId;
         this.applicantName = applicantName;
         this.applicantEmail = applicantEmail;
         this.applicantPhone = applicantPhone;
